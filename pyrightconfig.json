@@ -1,0 +1,20 @@
+{
+  "venvPath": ".",
+  "venv": ".venv",
+  "pythonVersion": "3.12",
+  "root": ".",
+  "include": ["data_engine"],
+  "exclude": [
+    "web_frontend",
+    "node_modules",
+    "**/__pycache__",
+    "data_engine/engines/parsing/edinet"
+  ],
+  "extraPaths": [
+    ".",
+    ".venv/lib/python3.12/site-packages"
+  ],
+  "reportMissingImports": "warning",
+  "reportMissingModuleSource": "none",
+  "reportGeneralTypeIssues": "warning"
+}

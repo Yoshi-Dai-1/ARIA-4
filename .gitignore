@@ -1,0 +1,33 @@
+# Python 一時ファイル
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+venv/
+ENV/
+
+# EDINET データ関連（巨大なため、ローカルからのプログラミングによるプッシュを防止）
+data/
+data/qualitative/
+data/20*/
+*.db
+*.log
+*.zip
+*.parquet
+*.json
+
+# 環境設定
+.env
+.DS_Store
+
+# Research Artifacts & Temporary Envs
+research_taxonomy.py
+research_venv/
+research_taxonomy_failure/
+tmp_debug/
+debug_work/
+temp_test_data/
+logs/
+data_engine/main_backup.py
+
