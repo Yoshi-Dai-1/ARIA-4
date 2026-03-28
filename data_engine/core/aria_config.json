@@ -1,6 +1,0 @@
-{
-    "tse_url": "https://www.jpx.co.jp/markets/statistics-equities/misc/tvdivq0000001vg2-att/data_j.xls",
-    "hf_folder_file_warning_threshold": 7000,
-    "aria_scope": "All",
-    "comment": "ARIA 設定ファイル。外部URLや閾値等のハードコード値を集約。"
-}
