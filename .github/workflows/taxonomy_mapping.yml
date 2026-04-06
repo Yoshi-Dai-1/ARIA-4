@@ -1,0 +1,71 @@
+name: Taxonomy Mapping Generator
+
+on:
+  schedule:
+    # 毎年1回か半年に1回などで十分（ここでは毎月1日 AM4:00 JST / UTC 19:00 の実行例）
+    - cron: '0 19 1 * *'
+  workflow_dispatch:
+    inputs:
+      target_year:
+        description: '対象年度（空欄の場合は最新年を自動取得）'
+        required: false
+        type: string
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  generate-mapping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: 'recursive'
+          
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          
+      - name: Generate Taxonomy Mapping
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          PYTHONPATH: .
+          TARGET_YEARS: ${{ github.event.inputs.target_year }}
+        run: |
+          mkdir -p master/meta
+          python data_engine/executors/taxonomy_mapper.py
+
+      - name: Commit and Push to Hugging Face
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_REPO: ${{ vars.HF_REPO }}
+          PYTHONPATH: .
+        run: |
+          # The generated parquet file should be saved to master/meta/taxonomy_mapping.parquet
+          # We push this directly to the Hugging Face lakehouse using the catalog manager
+          python -c "
+          import os
+          from data_engine.catalog_manager import CatalogManager
+          cm = CatalogManager()
+          file_path = 'master/meta/taxonomy_mapping.parquet'
+          if os.path.exists(file_path):
+              print('Uploading mapping parquet to HF Lakehouse...')
+              cm.hf_api.upload_file(
+                  path_or_fileobj=file_path,
+                  path_in_repo='meta/taxonomy_mapping.parquet',
+                  repo_id=cm.repo_id,
+                  repo_type='dataset'
+              )
+              print('Success.')
+          else:
+              print('File not found:', file_path)
+              exit(1)
+          "
