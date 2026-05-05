@@ -1,0 +1,63 @@
+name: RAW to TAR Migration
+
+# 【排他制御】Harvester と同じグローバルロックを共有
+# 移行中にデータ収集が走らないことを保証
+concurrency:
+  group: aria-global-lock
+  cancel-in-progress: false
+
+on:
+  workflow_dispatch:
+    inputs:
+      year_month:
+        description: '対象月 (YYYY-MM 形式, 例: 2016-03)'
+        required: true
+        type: string
+      dry_run:
+        description: 'テスト実行（コミットなし）'
+        required: false
+        type: boolean
+        default: false
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  HF_HUB_DISABLE_PROGRESS_BARS: "1"  # CI環境でのプログレスバー出力を抑制
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300  # 5時間制限（6時間GHA上限内に収める）
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: 'recursive'
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Disk Usage (Before)
+        run: df -h / | tail -1
+
+      - name: Run Migration
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_REPO: ${{ vars.HF_REPO }}
+          PYTHONPATH: .
+        run: |
+          ARGS="--year-month=${{ inputs.year_month }}"
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            ARGS="$ARGS --dry-run"
+          fi
+          python -m data_engine.executors.migrate_raw_to_tar $ARGS
+
+      - name: Disk Usage (After)
+        if: always()
+        run: df -h / | tail -1
