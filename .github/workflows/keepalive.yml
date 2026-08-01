@@ -1,0 +1,37 @@
+name: Keepalive (Prevent Workflow Disablement)
+
+# 【設計意図】
+# GitHub は 60 日間コミットがないリポジトリの cron ワークフローを自動無効化する。
+# 月 2 回（約 15 日間隔）空コミットを push し、60 日制限に対して約 4 倍の安全マージンを確保。
+#
+# 【排他制御】
+# aria-global-lock には参加しない。
+# 理由: HF Hub やデータに一切触れず、GitHub リポジトリへの空コミット push のみ。
+# 他ワークフローとのリソース競合は物理的に存在しない。
+# これにより、他ワークフローの実行状態に関係なく、確実に実行される。
+
+on:
+  schedule:
+    # 毎月 1 日・15 日の JST 02:00 (UTC 17:00)
+    # - Harvester 最終実行 (JST 22:00) から 4 時間後（深夜休止帯）
+    # - Market Indices (JST 04:00) の 2 時間前
+    # - ARIA の「2 時間スロット」設計に一貫
+    - cron: '0 17 1,15 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5  # 通常 1 分以内に完了。異常時に備えた安全タイムアウト
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Keepalive Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git commit --allow-empty -m "chore: keepalive commit to prevent scheduled workflow disablement [skip ci]"
+          git push
