@@ -1,0 +1,19 @@
+# === ARIA CI 必須パッケージ ===
+arelle-release>=2.35.17
+groq>=0.13.1
+pandas>=2.2.3
+pandera==0.21.1
+multimethod==1.9.1
+requests>=2.32.3
+setuptools>=75.6.0
+tqdm>=4.67.1
+pyarrow>=17.0.0,<27.0.0
+huggingface_hub>=1.7.1,<2.0.0
+numpy>=2.0.0
+urllib3
+openpyxl
+tenacity
+python-dotenv
+pydantic
+loguru
+tzdata
